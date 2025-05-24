@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://sherindzerogithub.github.io/e-commerce/vite",
+  "homepage": "https://sherindzerogithub.github.io/e-commerce",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
