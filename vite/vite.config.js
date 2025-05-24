@@ -9,6 +9,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: "/e-commerce/", // ✅ ADD THIS LINE
+  base: "/e-commerce/vite", // ✅ ADD THIS LINE
 });
 
