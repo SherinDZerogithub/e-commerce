@@ -1,3 +1,13 @@
+//this will hold all the application state
+//redux toolkit need slices
+//eg: login and authentication related->auth slice
+//admin side-> admin slice
+
+//------------------------------------------------------------------//
+
+//this is the global reducer
+//combine all of the slices into a one slice
+
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./auth-slice";
 import AdminProductSlice from "./admin/Products-slice";

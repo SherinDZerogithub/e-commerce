@@ -15,7 +15,7 @@ const shopReviewRouter = require("./routes/shop/review-routes");
 //create a db conn
 
 mongoose
-  .connect()
+  .connect("")
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
