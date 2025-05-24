@@ -17,16 +17,14 @@ import { ArrowUpDownIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ShoppingProductTile from "../../components/shopping-view/ProductTile";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import ProductDetailsDialog from "@/components/shopping-view/ProductDetails";
 import { addToCart, fetchToCart } from "@/store/shop/cart-slice";
 import { useToast } from "@/hooks/use-toast";
 
+
 function createSearchParamsHelper(filterParams) {
   const queryParams = new URLSearchParams();
-
-  //This line initiates a for...of loop that iterates over each key-value pair in the filterParams object.
-  //The Object.entries() method converts the object into an array of its entries (key-value pairs)
   for (const [key, value] of Object.entries(filterParams)) {
     if (Array.isArray(value) && value.length > 0) {
       value.forEach((val) => {
@@ -34,67 +32,45 @@ function createSearchParamsHelper(filterParams) {
       });
     }
   }
-
   return queryParams;
 }
 
 export default function ShopListing() {
-  //This function is used to send actions to the Redux store.
   const dispatch = useDispatch();
-
-  //This line declares a state variable named filters and a function setFilters to update that state.
-  //Whenever you want to change the filters, you would call setFilters with the new value.
   const [filters, setFilters] = useState({});
   const [sort, setSort] = useState(null);
+  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const location = useLocation();
   const { productList, productDetails } = useSelector(
     (state) => state.shopProducts
   );
-  const [searchParams, setSearchParams] = useSearchParams();
-
   const { cartItems } = useSelector((state) => state.shopCart);
-
   const { user } = useSelector((state) => state.auth);
-  const {toast} = useToast()
+  const { toast } = useToast();
 
-  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+  const categorySearchParams = searchParams.get("category");
   function handleSort(value) {
     setSort(value);
   }
 
   function handleFilter(getSectionId, getCurrentOption) {
-    console.log(getSectionId, getCurrentOption);
-
-    //A shallow copy of the existing filters object is created.
-    // This ensures that any modifications will not affect the original filters object directly.
     let copyFilters = { ...filters };
+    const sectionExists = Object.keys(copyFilters).includes(getSectionId);
 
-    //The code checks if the getSectionId exists in the keys of the copyFilters object and stores its index.
-    //  If it does not exist, indexOfCurrentSection will be -1.
-    const indexOfCurrentSection =
-      Object.keys(copyFilters).indexOf(getSectionId);
-    if (indexOfCurrentSection === -1) {
-      copyFilters = {
-        //check the current filters\
-        ...copyFilters,
-        //If the section does not exist in copyFilters, a new entry is created with getSectionId
-        [getSectionId]: [getCurrentOption],
-      };
+    if (!sectionExists) {
+      copyFilters[getSectionId] = [getCurrentOption];
     } else {
-      //If the section exists, it checks if getCurrentOption is already included in the array for that section:
-      const indexOfCurrentOption =
-        copyFilters[getSectionId].indexOf(getCurrentOption);
-      if (indexOfCurrentOption === -1) {
-        //If not found (indexOfCurrentOption === -1), it adds getCurrentOption to the array.
+      const optionIndex = copyFilters[getSectionId].indexOf(getCurrentOption);
+      if (optionIndex === -1) {
         copyFilters[getSectionId].push(getCurrentOption);
       } else {
-        //If found, it removes getCurrentOption from the array using splice.
-        copyFilters[getSectionId].splice(indexOfCurrentOption, 1);
+        copyFilters[getSectionId].splice(optionIndex, 1);
       }
     }
-    console.log("copyFilters", copyFilters);
-    setFilters(copyFilters);
 
-    //This allows the filters to persist even if the page is refreshed.
+    setFilters(copyFilters);
     sessionStorage.setItem("filters", JSON.stringify(copyFilters));
   }
 
@@ -102,8 +78,26 @@ export default function ShopListing() {
     dispatch(fetchProductsDetails(getCurrentProductId));
   }
 
-  function handleAddtoCart(getCurrentProductId) {
-    console.log(getCurrentProductId);
+  function handleAddtoCart(getCurrentProductId, getTotalStock) {
+    const getCartItems = cartItems.items || [];
+
+    if (getCartItems.length) {
+      const indexOfCurrentItem = getCartItems.findIndex(
+        (item) => item.productId === getCurrentProductId
+      );
+
+      if (indexOfCurrentItem > -1) {
+        const getQuantity = getCartItems[indexOfCurrentItem].quantity;
+        if (getQuantity + 1 > getTotalStock) {
+          toast({
+            title: `⚠️ Only ${getQuantity} can be added for this item`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     dispatch(
       addToCart({
         userId: user?.id,
@@ -112,48 +106,68 @@ export default function ShopListing() {
       })
     ).then((data) => {
       if (data?.payload?.success) {
-        dispatch(fetchToCart(user?.id)); // ✅ Make sure `user?.id` is not undefined
+        dispatch(fetchToCart(user?.id));
         toast({
           title: "Product is added to cart",
-          variant: "",
-        })
+        });
       }
     });
   }
 
-  //This is a React hook that allows you to perform side effects in function components.
+  // Load filters and default sort on first render
   useEffect(() => {
-    //This code retrieves the saved filters from sessionStorage and sets them in the filters state variable.
-    //If the item does not exist (i.e., it returns null), the code defaults to an empty object {} and sets it in the filters state variable.
     const savedFilters = JSON.parse(sessionStorage.getItem("filters")) || {};
-
     setFilters(savedFilters);
     setSort("price-lowtohigh");
-    // The empty dependency array [] means this effect will only run once when the component mounts.
-  }, []);
+  }, [categorySearchParams]);
 
-  //useEffect is called to perform a side effect whenever its dependencies change.
-  //  In this case, the dependencies are dispatch, filters, and sort
-  useEffect(() => {
-    if (filters !== null && sort !== null)
-      // Trigger API call when filters or sort changes
-      dispatch(
-        fetchAllFilteredProducts({ filterParams: filters, sortParams: sort })
-      );
-  }, [dispatch, filters, sort]);
-
+  // Apply filters and sort to URL as query params
   useEffect(() => {
     if (filters && Object.keys(filters).length > 0) {
-      const createQueryString = createSearchParamsHelper(filters);
-      setSearchParams(new URLSearchParams(createQueryString));
+      const queryString = createSearchParamsHelper(filters);
+      setSearchParams(queryString);
     }
-  }, [filters]);
-  // This means that the effect will run whenever the filters variable changes.
+  }, [filters, setSearchParams]);
 
+  // Fetch products on filter or sort change
   useEffect(() => {
-    if (productDetails !== null) setOpenDetailsDialog(true);
+    if (filters !== null && sort !== null) {
+      dispatch(
+        fetchAllFilteredProducts({
+          filterParams: filters,
+          sortParams: sort,
+        })
+      );
+    }
+  }, [dispatch, filters, sort]);
+
+  // Re-fetch on navigation change (ex: switching category like Kids/Men)
+  useEffect(() => {
+    // 👇 Use location.state to set filters from header/category navigation
+    const storedFilters = sessionStorage.getItem("filters");
+    const parsedFilters = storedFilters ? JSON.parse(storedFilters) : null;
+
+    // Check if category filter is passed via navigation (e.g. { category: ['tech'] })
+    const categoryFilterFromLocation = location.state?.filters;
+
+    const finalFilters = categoryFilterFromLocation || parsedFilters || {};
+
+    // ✅ Set filters state
+    setFilters(finalFilters);
+    setSort("price-lowtohigh");
+
+    // ✅ Persist to session storage
+    sessionStorage.setItem("filters", JSON.stringify(finalFilters));
+  }, [location.state]);
+
+  // Show product dialog
+  useEffect(() => {
+    if (productDetails !== null) {
+      setOpenDetailsDialog(true);
+    }
   }, [productDetails]);
 
+  // Alert when cart items are fetched
   useEffect(() => {
     if (cartItems && cartItems.length > 0) {
       alert(
@@ -164,17 +178,17 @@ export default function ShopListing() {
     }
   }, [cartItems]);
 
-  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 p-4 md:p-6 ">
+
+    //this si the products paaaaaaaaaaaaaaaaaaaaaaaaaaaaageeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 p-4 md:p-6">
       <ProductFilter filter={filters} handleFilters={handleFilter} />
-      <div className="bg-background w-full rounded-lg shadow-sm ">
-        <div className="p-4  border-b flex items-center justify-between">
-          <h2 className="text-lg font-extrabold"> All Products</h2>
+      <div className="bg-background w-full rounded-lg shadow-sm">
+        <div className="p-4 border-b flex items-center justify-between">
+          <h2 className="text-lg font-extrabold">All Products</h2>
           <div className="flex items-center gap-4">
             <span className="text-muted-foreground">
-              {" "}
-              {productList?.length} Products{" "}
+              {productList?.length} Products
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -186,7 +200,7 @@ export default function ShopListing() {
                   <ArrowUpDownIcon className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[200px] ">
+              <DropdownMenuContent align="end" className="w-[200px]">
                 <DropdownMenuRadioGroup value={sort} onValueChange={handleSort}>
                   {sortOptions.map((sortItem) => (
                     <DropdownMenuRadioItem

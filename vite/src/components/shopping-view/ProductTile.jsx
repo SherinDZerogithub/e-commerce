@@ -20,11 +20,19 @@ function ShoppingProductTile({
             alt={product?.title}
             className="w-full h-[400px] object-cover"
           />
-          {isOnSale && (
-            <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-xs rounded-md shadow">
+          {product?.totalStock === 0 ? (
+            <Badge className="absolute top-3 left-3 bg-red-600 text-white px-3 py-1 text-xs rounded-md shadow">
+              Out Of Stock
+            </Badge>
+          ) : product?.totalStock < 10 ? (
+            <Badge className="absolute top-3 left-3 bg-blue-400 text-white px-3 py-1 text-xs rounded-md shadow">
+              {`Only ${product?.totalStock} left`}
+            </Badge>
+          ) : product?.salePrice > 0 ? (
+            <Badge className="absolute top-3 left-3 bg-orange-600  text-white px-3 py-1 text-xs rounded-md shadow">
               Sale
             </Badge>
-          )}
+          ) : null}
         </div>
 
         <CardContent className="p-5">
@@ -57,12 +65,21 @@ function ShoppingProductTile({
       </div>
 
       <CardFooter className="p-4 pt-0">
-        <Button
-          onClick={() => handleAddtoCart(product._id)}
-          className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 rounded-md transition"
-        >
-          Add to cart
-        </Button>
+        {product?.totalStock === 0 ? (
+          <Button
+            onClick={() => handleAddtoCart(product._id)}
+            className="w-full opacity-50 cursor-not-allowed font-medium py-2 rounded-md transition"
+          >
+            Out OF Stock
+          </Button>
+        ) : (
+          <Button
+            onClick={() => handleAddtoCart(product._id, product?.totalStock)}
+            className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 rounded-md transition"
+          >
+            Add to cart
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

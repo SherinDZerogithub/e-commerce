@@ -50,3 +50,10 @@ ehthumbs.db
 LICENSE.md
 nmignore.md
 release.yml
+
+# remove cloudinary file
+
+
+
+cloudinary.js
+paypal.js

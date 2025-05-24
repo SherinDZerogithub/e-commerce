@@ -1,36 +1,24 @@
 const Product = require("../../models/Products");
-//The Product model is defined using Mongoose, which provides:
-//Schema: Defines the structure of product documents
-//
+
 
 const getFilterProducts = async (req, res) => {
-  // 1. Extract query parameters
-  // 2. Build filters object
-  // 3. Build sort object
-  // 4. Execute database query
-  // 5. Return response
-  //Parses query parameters:
+ 
   const { category = "", brand = "", sortBy = "price-lowtohigh" } = req.query;
-  //req.query contains the URL query parameters (after the ? in the URL)
 
-  //Builds MongoDB query:
   let filters = {};
 
   if (category) {
     filters.category = { $in: category.split(",") };
   }
 
-  //filters will be used in the MongoDB query
-  //$in is a MongoDB operator that means "match any of these values"
-  //category.split(",") converts "cat1,cat2" into ["cat1", "cat2"]
+  
   if (brand) {
     filters.brand = { $in: brand.split(",") };
   }
 
   let sort = {};
 
-  //1 means ascending, -1 means descending
-  //Applies sorting
+ 
   switch (sortBy) {
     case "price-lowtohigh":
       sort.price = 1;

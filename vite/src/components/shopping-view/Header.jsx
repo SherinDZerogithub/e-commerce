@@ -5,7 +5,12 @@ import {
   ShoppingCart,
   UserCheck2,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "../ui/sheet";
 import { Button } from "../ui/button";
 import { useDispatch, useSelector } from "react-redux";
@@ -23,23 +28,50 @@ import { logOutUser } from "@/store/auth-slice";
 import UsercartWrapper from "./CartWrapper";
 import { useEffect, useState } from "react";
 import { fetchToCart } from "@/store/shop/cart-slice";
+import { Label } from "../ui/label";
 
 function MenuItems() {
+  const navigate = useNavigate();
+  //this will give us the path name
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  function handleNavigate(getCurrentMenuItem) {
+    sessionStorage.removeItem("filters");
+
+    const currentFilter =
+      getCurrentMenuItem.id !== "home" &&
+      getCurrentMenuItem.id !== "products" &&
+      getCurrentMenuItem.id !== "search"
+        ? {
+            category: [getCurrentMenuItem.id],
+          }
+        : null;
+
+    sessionStorage.setItem("filters", JSON.stringify(currentFilter));
+
+    location.pathname.includes("listing") && currentFilter !== null
+      ? setSearchParams(
+          new URLSearchParams(`?category=${getCurrentMenuItem.id}`)
+        )
+      : navigate(getCurrentMenuItem.path, {
+          state: { timestamp: Date.now() }, // 👈 this will force location.state to change
+        });
+  }
+
   return (
-    <nav className="flex flex-col gap-4 lg:flex-row lg:gap-8">
-      {shoppingViewHeaderMenuItems.map((item) => (
-        <Link
-          key={item.id}
-          to={item.path}
-          className="text-white text-sm font-medium hover:text-gray-200 transition-colors"
+    <nav className="flex flex-col mb-3 lg:mb-0 lg:items-center gap-6 lg:flex-row">
+      {shoppingViewHeaderMenuItems.map((menuItem) => (
+        <Label
+          onClick={() => handleNavigate(menuItem)}
+          className="text-sm font-medium cursor-pointer"
+          key={menuItem.id}
         >
-          {item.label}
-        </Link>
+          {menuItem.label}
+        </Label>
       ))}
     </nav>
   );
 }
-
 function HeaderRightContent() {
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
@@ -69,6 +101,7 @@ function HeaderRightContent() {
         </Button>
 
         <UsercartWrapper
+          setOpenCartSheet={setOpenCartSheet}
           cartItems={
             cartItems && cartItems.items && cartItems.items.length > 0
               ? cartItems.items

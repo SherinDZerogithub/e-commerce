@@ -5,6 +5,8 @@ const initialState = {
   isAuthenticated: false,
   isLoading: true,
   user: null,
+  userDetails: [], 
+  error: null, 
 };
 
 export const registerUser = createAsyncThunk(
@@ -39,22 +41,6 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-//  export const logoutUser = createAsyncThunk(
-// "/auth/logout",
-
-// async () => {
-//  const response = await axios.post(
-//  "http://localhost:5000/api/auth/logout",
-// {},
-///{
-// withCredentials: true,
-//}
-/// );
-
-// return response.data;
-///}
-////);
-
 export const logOutUser = createAsyncThunk(
   "/auth/logout",
 
@@ -88,6 +74,22 @@ export const checkAuth = createAsyncThunk(
     );
 
     return response.data;
+  }
+);
+export const getAllUsersAuth = createAsyncThunk(
+  "/auth/getAllUsersAuth",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/auth/get", {
+        withCredentials: true,
+      });
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch users"
+      );
+    }
   }
 );
 
@@ -144,6 +146,19 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
+      })
+      .addCase(getAllUsersAuth.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getAllUsersAuth.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.userDetails = action.payload.users || [];
+      })
+      .addCase(getAllUsersAuth.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+        state.userDetails = [];
       });
   },
 });

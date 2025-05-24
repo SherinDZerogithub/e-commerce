@@ -20,10 +20,9 @@ const handleImageUploads = async (req, res) => {
   }
 };
 
-//add a new product
 
 const addProduct = async (req, res) => {
-  //all the properties and info needed
+ 
   try {
     const {
       image,
@@ -60,7 +59,6 @@ const addProduct = async (req, res) => {
   }
 };
 
-//fetch all products
 const fetchAllProducts = async (req, res) => {
   try {
     const listOfProducts = await Product.find({});
@@ -77,12 +75,10 @@ const fetchAllProducts = async (req, res) => {
   }
 };
 
-//edit products
+
 const editAllProducts = async (req, res) => {
   try {
-    //first we need to get the product id
-    //in our API url when we clicking the product
-
+   
     const { id } = req.params;
     const {
       image,
@@ -93,7 +89,7 @@ const editAllProducts = async (req, res) => {
       price,
       salePrice,
       totalStock,
-      averageReview, // <-- add this line
+      averageReview, 
     } = req.body;
 
     const findProduct = await Product.findById(id);
@@ -129,7 +125,7 @@ const editAllProducts = async (req, res) => {
   }
 };
 
-//delete a product
+
 
 const deletehAllProducts = async (req, res) => {
   try {

@@ -4,11 +4,13 @@ const {
   loginUser,
   logoutUser,
   authMiddleware,
+  getUser,
 } = require("../../controllers/auth/auth-controller");
 
 const router = express.Router();
 
 router.post("/register", registerUser);
+router.get("/get", authMiddleware, getUser);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 router.get("/check-auth", authMiddleware, (req, res) => {

@@ -35,6 +35,21 @@ const registerUser = async (req, res) => {
   }
 };
 
+const getUser = async (req, res) => {
+  try {
+    const users = await User.find().select("-password"); // Exclude passwords
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching users",
+    });
+  }
+};
 //login
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -117,4 +132,10 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = { registerUser, loginUser, logoutUser, authMiddleware };
+module.exports = {
+  registerUser,
+  loginUser,
+  logoutUser,
+  authMiddleware,
+  getUser,
+};

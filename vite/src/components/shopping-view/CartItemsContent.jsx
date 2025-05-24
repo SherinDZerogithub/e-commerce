@@ -9,13 +9,46 @@ export default function UserCartItemsContent({ cartItems }) {
 
   const dispatch = useDispatch();
   const { toast } = useToast();
-
+   const {  cartItem} = useSelector((state) => state.shopCart);
+  //for the total stock we will first get the list of products
+  const { productList } = useSelector((state) => state.shopProducts);
   function handleCartItemDelete(getcartItems) {
     dispatch(
       deleteCartItem({ userId: user?.id, productId: getcartItems?.productId })
     );
   }
   function handleUpdateQuantity(getcartItems, typeOfAction) {
+     
+     if (typeOfAction == "add") {
+      let getCarts = cartItem.items || [];
+
+      if (getCarts.length) {
+        const indexOfCurrentCartItem = getCarts.findIndex(
+          (item) => item.productId === getcartItems?.productId
+        );
+
+        const getCurrentProductIndex = productList.findIndex(
+          (product) => product._id === getcartItems?.productId
+        );
+        const getTotalStock = productList[getCurrentProductIndex].totalStock;
+
+        console.log(getCurrentProductIndex, getTotalStock, "getTotalStock");
+
+        if (indexOfCurrentCartItem > -1) {
+          
+          const getQuantity = getCarts[indexOfCurrentCartItem].quantity;
+          if (getQuantity + 1 > getTotalStock) {
+            toast({
+              title: ` Only ${getQuantity} Items can be added for this product`,
+              variant: "destructive",
+            });
+
+            return;
+          }
+        }
+      }
+    }
+
     dispatch(
       updateCartQuantity({
         userId: user?.id,

@@ -19,6 +19,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { checkAuth } from "./store/auth-slice";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import PaypalReturnShopPage from "./pages/shopping-view/PaypalReturn";
+import PaymentSuccessPage from "./pages/shopping-view/PaymentSuccessPage";
+import SearchProducts from "./pages/shopping-view/Search";
 
 function App() {
   const { isAuthenticated, user, isLoading } = useSelector(
@@ -33,7 +36,7 @@ function App() {
   console.log("App status =>", { isAuthenticated, user, isLoading });
 
   if (isLoading) {
-    return <Skeleton className="w-full h-screen bg-black rounded-full" />; // Show a loading spinner or message until auth check completes
+    return <Skeleton className="w-full h-screen bg-black" />; // Show a loading spinner or message until auth check completes
   }
   console.log("App status =>", {
     isAuthenticated,
@@ -82,6 +85,9 @@ function App() {
             <Route path="listing" element={<ShopListing />} />
             <Route path="checkout" element={<ShopCheckout />} />
             <Route path="account" element={<ShopAccount />} />
+            <Route path="paypal-return" element={<PaypalReturnShopPage />} />
+            <Route path="search" element={<SearchProducts />} />
+            <Route path="payment-success" element={<PaymentSuccessPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
           <Route path="/unauth-page" element={<UnauthPage />} />

@@ -7,16 +7,16 @@ import { logOutUser } from "@/store/auth-slice";
 export default function AdminHeader({ setOpen }) {
   const dispatch = useDispatch();
 
+
   function handleLogOut() {
     dispatch(logOutUser());
   }
 
-  // Properly destructure props
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#0f2a28] to-[#1e293b] border-b border-slate-800 shadow-sm">
       {/* Toggle Menu Button - Visible on small screens only */}
       <Button
-        onClick={() => setOpen(true)} // Now properly using the prop
+        onClick={() => setOpen(true)} 
         variant="ghost"
         size="icon"
         className="text-white lg:hidden sm:block hover:bg-white/10"

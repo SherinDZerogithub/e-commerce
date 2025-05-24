@@ -1,14 +1,19 @@
-import React, { useEffect } from "react";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useDispatch, useSelector } from "react-redux";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import { StarIcon } from "lucide-react";
+import { Star, StarIcon } from "lucide-react";
 import { Input } from "../ui/input";
 import { addToCart, fetchToCart } from "@/store/shop/cart-slice";
 import { useToast } from "@/hooks/use-toast";
 import { setProductDetails } from "@/store/shop/products-slice";
+import { Label } from "../ui/label";
+import StarRating from "../common/StarRating";
+import StarRatingcomponent from "../common/StarRating";
+import StarRatingComponent from "../common/StarRating";
+import { useEffect, useState } from "react";
+import { addNewReviews, getReviews } from "@/store/shop/review-slice";
 
 export default function ProductDetailsDialog({
   open,
@@ -18,7 +23,85 @@ export default function ProductDetailsDialog({
   const { user } = useSelector((state) => state.auth);
   const { toast } = useToast();
   const dispatch = useDispatch();
-  function handleAddtoCart(getCurrentProductId) {
+
+  const [reviewMsg, setReviewMsg] = useState("");
+  const [rating, setRating] = useState(0);
+  const { cartItems } = useSelector((state) => state.shopCart);
+  const { reviews } = useSelector((state) => state.shopReview);
+
+  function handleRatingChange(getRating) {
+    console.log(getRating, "getRating");
+
+    setRating(getRating);
+  }
+  function handleAddReview() {
+    if (!rating) {
+      toast({
+        title: "Please select a rating",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    dispatch(
+      addNewReviews({
+        productId: productDetails?._id,
+        userId: user?.id,
+        userName: user?.userName,
+        reviewMessage: reviewMsg,
+        reviewValue: rating,
+      })
+    ).then((result) => {
+      console.log("Add review result:", result);
+
+      const isSuccess = result?.meta?.requestStatus === "fulfilled";
+
+      if (isSuccess) {
+        setRating(0);
+        setReviewMsg("");
+        dispatch(getReviews(productDetails?._id));
+        toast({
+          title: "Review added successfully!",
+        });
+      } else {
+        toast({
+          title: result?.error?.message || "Failed to add review",
+          variant: "destructive",
+        });
+      }
+    });
+  }
+
+  useEffect(() => {
+    if (productDetails !== null) {
+      dispatch(getReviews(productDetails?._id)).then((res) => {
+        console.log("Fetched reviews after submission:", res);
+      });
+    }
+  }, [productDetails]);
+
+  console.log(reviews, "reviews");
+
+  function handleAddtoCart(getCurrentProductId, getTotalStock) {
+    const getCartItems = cartItems.items || [];
+
+    if (getCartItems.length) {
+      const indexOfCurrentItem = getCartItems.findIndex(
+        (item) => item.productId === getCurrentProductId
+      );
+
+      if (indexOfCurrentItem > -1) {
+        const getQuantity = getCartItems[indexOfCurrentItem].quantity;
+        if (getQuantity + 1 > getTotalStock) {
+          toast({
+            title: `⚠️ Only ${getQuantity} can be added for this item`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     console.log(getCurrentProductId);
     dispatch(
       addToCart({
@@ -40,89 +123,147 @@ export default function ProductDetailsDialog({
   function handleDialogClose() {
     setOpen(false);
     dispatch(setProductDetails());
+    setRating(0);
+    setReviewMsg("");
   }
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="grid grid-cols-2 gap-8 sm:p-12 max-w-[90vw] sm:max-w-[80vw] lg:max-w-[60vw]">
-        <div className="relative overflow-hidden rounded-lg">
+      <DialogContent className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 sm:p-8 max-w-[95vw] sm:max-w-[90vw] lg:max-w-[70vw] xl:max-w-[60vw] rounded-lg">
+        {/* Product Image */}
+        <div className="relative overflow-hidden rounded-xl bg-gray-50 aspect-square flex items-center justify-center">
           <img
             src={productDetails?.image}
             alt={productDetails?.title}
-            className="aspect-square object-cover w-[400px] h-[500px] "
+            className="object-contain w-full h-full p-4 transition-all hover:scale-105"
           />
         </div>
-        <div className="gap-6 ">
+
+        {/* Product Details */}
+        <div className="flex flex-col gap-6 h-full overflow-y-auto">
+          {/* Title & Description */}
           <div>
-            <h1 className="text-4xl font-extrabold mb-2">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-3">
               {productDetails?.title}
             </h1>
-            <p className="text-muted-foreground text-2xl mb-4">
+            <p className="text-lg text-gray-600 mb-6">
               {productDetails?.description}
             </p>
 
-            <div className="flex justify-between items-center mb-2">
-              <span
-                className={`${
-                  productDetails?.salePrice > 0
-                    ? "line-through text-gray-400"
-                    : ""
-                } text-lg font-semibold text-primary`}
-              >
-                ${productDetails?.price}
-              </span>
-              {productDetails?.salePrice > 0 && (
-                <span className="text-lg font-bold text-green-600">
-                  ${productDetails?.salePrice}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-1">
-                <StarIcon className="w-4 h-4 fill-primary cursor-pointer " />
-                <StarIcon className="w-4 h-4 fill-primary cursor-pointer " />
-                <StarIcon className="w-4 h-4 fill-primary cursor-pointer " />
-                <StarIcon className="w-4 h-4 fill-primary cursor-pointer " />
-                <StarIcon className="w-4 h-4 fill-primary cursor-pointer " />
+            {/* Price Section */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-baseline gap-2">
+                {productDetails?.salePrice > 0 ? (
+                  <>
+                    <span className="text-2xl font-bold text-gray-900">
+                      ${productDetails?.salePrice}
+                    </span>
+                    <span className="text-lg text-gray-400 line-through">
+                      ${productDetails?.price}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-2xl font-bold text-gray-900">
+                    ${productDetails?.price}
+                  </span>
+                )}
               </div>
             </div>
-            <p>Rating: 4.5 </p>
+
+            {/* Stock & Rating */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-500">
+                  Stock:
+                </span>
+                <span className="text-sm font-semibold text-gray-700">
+                  {productDetails?.totalStock ?? "N/A"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon
+                      key={i}
+                      className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                    />
+                  ))}
+                </div>
+                <span className="text-sm font-medium text-gray-700">4.5</span>
+              </div>
+            </div>
           </div>
 
-          <div className="max-h-[300px] overflow-auto ">
-            <h2 className="text-xl font-bold mb-4">Review</h2>
-            <div className="grid gap-6">
-              <div className="flex gap-4">
-                <Avatar className="bg-black cursor-pointer">
-                  <AvatarFallback className="bg-black text-white font-extrabold">
-                    {user?.userName
-                      ?.split(" ")
-                      .map((word) => word[0]?.toUpperCase())
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1">
-                  <div className="flex items-center gap-2">
-                    <h2> {user?.userName} </h2>
+          {/* Reviews Section */}
+          <div className="border-t pt-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Reviews
+            </h2>
+            <div className="flex gap-4">
+              <Avatar className="h-10 w-10 border border-gray-200">
+                <AvatarFallback className="bg-gray-100 text-gray-700 font-medium">
+                  {user?.userName
+                    ?.split(" ")
+                    .map((word) => word[0]?.toUpperCase())
+                    .join("")}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="mb-2">
+                  <h3 className="font-medium text-gray-800">
+                    {user?.userName}
+                  </h3>
+                </div>
+                <div className="space-y-4 mt-10 flex-col gap-3">
+                  <Label> Write Your Review</Label>
+                  <div className="flex ">
+                    <StarRatingComponent
+                      rating={rating}
+                      handleRatingChange={handleRatingChange}
+                    />
                   </div>
-
-                  <div className=" h-[170px] w-[320px]">
-                    <Input placeholder="Write A Review text-muted-foreground mb-4" />
-                    <Button className="mt-5">Submit</Button>
-                  </div>
+                  <Input
+                    name="reviewMsg"
+                    value={reviewMsg}
+                    onChange={(event) => setReviewMsg(event.target.value)}
+                    placeholder="Write a review..."
+                    className="bg-gray-50 border-gray-200 focus:bg-white"
+                  />
+                  <Button
+                    className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800"
+                    disabled={reviewMsg.trim() === ""}
+                    onClick={handleAddReview}
+                  >
+                    Submit Review
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
 
-          <Separator />
-          <div className="mt-5 mb-2">
-            <Button
-              onClick={() => handleAddtoCart(productDetails?._id)}
-              className=" bg-red-700 w-full"
-            >
-              Add To Cart
-            </Button>
+          {/* Add to Cart Button */}
+          <div className="mt-auto pt-4 border-t">
+            {productDetails?.totalStock === 0 ? (
+              <Button
+                disabled
+                className="w-full py-6 text-lg font-medium bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                Out Of Stock
+              </Button>
+            ) : (
+              <Button
+                onClick={() =>
+                  handleAddtoCart(
+                    productDetails?._id,
+                    productDetails?.totalStock
+                  )
+                }
+                className="w-full py-6 text-lg font-medium bg-black hover:bg-gray-800 transition-colors"
+              >
+                Add to Cart
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

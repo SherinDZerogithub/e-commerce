@@ -8,20 +8,22 @@ const initialState = {
 };
 
 export const fetchAllFilteredProducts = createAsyncThunk(
-  "/products/addNewProduct",
+  "/products/fetchAllProducts",
   async ({ filterParams, sortParams }) => {
-    //create a queary
-    const queary = new URLSearchParams({
+    console.log(fetchAllFilteredProducts, "fetchAllFilteredProducts");
+
+    const query = new URLSearchParams({
       ...filterParams,
       sortBy: sortParams,
     });
-    // The await keyword indicates that the function will wait for the API call to complete before proceeding.
+
     const result = await axios.get(
-      `http://localhost:5000/api/shop/products/get?${queary} `
+      `http://localhost:5000/api/shop/products/get?${query}`
     );
+
+    console.log(result);
+
     return result?.data;
-    //The optional chaining operator (?.) is used to safely access the data property, ensuring that
-    //  if result is undefined or null, it won't throw an error.
   }
 );
 export const fetchProductsDetails = createAsyncThunk(
@@ -53,17 +55,15 @@ const shoppingProductSlice = createSlice({
       // Fetch All Products
       .addCase(fetchAllFilteredProducts.pending, (state) => {
         state.isLoading = true;
-        state.error = null;
       })
       .addCase(fetchAllFilteredProducts.fulfilled, (state, action) => {
         state.isLoading = false;
         state.productList = action.payload.data;
       })
-      .addCase(fetchAllFilteredProducts.rejected, (state, action) => {
+      .addCase(fetchAllFilteredProducts.rejected, (state) => {
         state.isLoading = false;
-        state.error = action.payload;
+        state.productList = [];
       })
-
       // Fetch Product Details
       .addCase(fetchProductsDetails.pending, (state) => {
         state.isLoading = true;

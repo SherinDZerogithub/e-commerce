@@ -141,7 +141,6 @@ function CommonForm({
     return element;
   }
 
-  console.log("formControls =>", formControls);
   return (
     <form onSubmit={onSubmit}>
       <div className="flex flex-col gap-3">

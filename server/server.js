@@ -6,13 +6,18 @@ const authRouter = require("./routes/auth/auth-routes");
 const adminProductsRouter = require("./routes/admin/ProductsRoutes");
 const shopProductsRouter = require("./routes/shop/ProductRouteShop");
 const shopCartsRouter = require("./routes/shop/cart-routes");
+const shopAddressRouter = require("./routes/shop/address-routes");
+const shopOrderRouter = require("./routes/shop/order-routes");
+const shopSearchRouter = require("./routes/shop/search-routes");
+const adminOrderRouter = require("./routes/admin/order-routes-admin");
+const shopReviewRouter = require("./routes/shop/review-routes");
 
 //create a db conn
 
 mongoose
-  .connect("")
-  .then(() => console.log("connected to db"))
-  .catch((err) => console.log(err));
+  .connect()
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 const app = express();
 
@@ -37,7 +42,13 @@ app.use(cookieParser());
 app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/admin/products", adminProductsRouter);
+
 app.use("/api/shop/products", shopProductsRouter);
 app.use("/api/shop/cart", shopCartsRouter);
+app.use("/api/shop/address", shopAddressRouter);
+app.use("/api/shop/orders", shopOrderRouter);
+app.use("/api/shop/search", shopSearchRouter);
+app.use("/api/admin/orders", adminOrderRouter);
+app.use("/api/shop/reviews", shopReviewRouter);
 
 app.listen(PORT, () => console.log(`Server started at ${PORT}`));

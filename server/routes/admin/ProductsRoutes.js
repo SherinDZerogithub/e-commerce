@@ -7,7 +7,7 @@ const {
   editAllProducts,
 } = require("../../controllers/admin/productsController");
 
-// ✅ Corrected import
+
 const { upload } = require("../../helpers/cloudinary");
 
 
