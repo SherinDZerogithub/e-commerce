@@ -1,14 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
 
+// Replace 'react-portfolio' with your actual repo name if different
 export default defineConfig({
+  base: "/e-commerce/", // 👈 Add this line
   plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+  css: {
+    modules: {
+      localsConvention: "camelCase",
     },
   },
-  base: "/e-commerce/", // ✅ ADD THIS LINE
 });
-
