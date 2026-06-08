@@ -14,7 +14,7 @@ export const registerUser = createAsyncThunk(
 
   async (formData) => {
     const response = await axios.post(
-      "http://localhost:5000/api/auth/register",
+      "/api/auth/register",
       formData,
       {
         withCredentials: true,
@@ -28,16 +28,26 @@ export const registerUser = createAsyncThunk(
 export const loginUser = createAsyncThunk(
   "/auth/login",
 
-  async (formData) => {
-    const response = await axios.post(
-      "http://localhost:5000/api/auth/login",
-      formData,
-      {
-        withCredentials: true,
-      }
-    );
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        "/api/auth/login",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
 
-    return response.data;
+      // store token in localStorage and set default Authorization header
+      if (response.data && response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { success: false, message: "Login failed" });
+    }
   }
 );
 
@@ -46,13 +56,16 @@ export const logOutUser = createAsyncThunk(
 
   async () => {
     const response = await axios.post(
-      "http://localhost:5000/api/auth/logout",
+      "/api/auth/logout",
       {},
-
       {
         withCredentials: true,
       }
     );
+
+    // Clear token from localStorage and axios headers
+    localStorage.removeItem("token");
+    delete axios.defaults.headers.common["Authorization"];
 
     return response.data;
   }
@@ -61,26 +74,35 @@ export const logOutUser = createAsyncThunk(
 export const checkAuth = createAsyncThunk(
   "/auth/checkauth",
 
-  async () => {
-    const response = await axios.get(
-      "http://localhost:5000/api/auth/check-auth",
-      {
-        withCredentials: true,
-        headers: {
-          "Cache-Control":
-            "no-store, no-cache, must-revalidate, proxy-revalidate",
-        },
-      }
-    );
+  async (_, { rejectWithValue }) => {
+    // include token from localStorage if available
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    return response.data;
+    try {
+      const response = await axios.get("/api/auth/check-auth", {
+        withCredentials: true,
+        headers,
+      });
+      return response.data;
+    } catch (error) {
+      // Clear stale token on 401 so the user is redirected to login cleanly
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        delete axios.defaults.headers.common["Authorization"];
+      }
+      return rejectWithValue(error.response?.data || { success: false });
+    }
   }
 );
 export const getAllUsersAuth = createAsyncThunk(
   "/auth/getAllUsersAuth",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("http://localhost:5000/api/auth/get", {
+      const response = await axios.get("/api/auth/get", {
         withCredentials: true,
       });
 

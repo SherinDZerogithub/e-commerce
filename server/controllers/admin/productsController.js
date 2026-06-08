@@ -21,6 +21,17 @@ const handleImageUploads = async (req, res) => {
 };
 
 
+/**
+ * Normalise a tags value coming from the request body.
+ * Accepts a comma-separated string ("summer, casual, slim-fit")
+ * or an already-parsed array. Returns a trimmed, lower-cased array.
+ */
+function normaliseTags(raw) {
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : String(raw).split(",");
+  return arr.map((t) => t.trim().toLowerCase()).filter(Boolean);
+}
+
 const addProduct = async (req, res) => {
  
   try {
@@ -33,6 +44,7 @@ const addProduct = async (req, res) => {
       price,
       salePrice,
       totalStock,
+      tags,
     } = req.body;
     const newlyCreatedProduct = new Product({
       image,
@@ -43,6 +55,7 @@ const addProduct = async (req, res) => {
       price,
       salePrice,
       totalStock,
+      tags: normaliseTags(tags),
     });
 
     await newlyCreatedProduct.save();
@@ -89,7 +102,8 @@ const editAllProducts = async (req, res) => {
       price,
       salePrice,
       totalStock,
-      averageReview, 
+      averageReview,
+      tags,
     } = req.body;
 
     const findProduct = await Product.findById(id);
@@ -109,6 +123,10 @@ const editAllProducts = async (req, res) => {
     findProduct.totalStock = totalStock || findProduct.totalStock;
     findProduct.image = image || findProduct.image;
     findProduct.averageReview = averageReview || findProduct.averageReview;
+    // Allow clearing tags by passing an empty string or empty array
+    if (tags !== undefined) {
+      findProduct.tags = normaliseTags(tags);
+    }
 
     await findProduct.save();
 

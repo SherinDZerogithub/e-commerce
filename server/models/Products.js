@@ -10,6 +10,16 @@ const ProductSchema = new mongoose.Schema(
     price: Number,
     salePrice: Number,
     totalStock: Number,
+    averageReview: { type: Number, default: 0 },
+    /**
+     * Free-form tags used for search and recommendation boosting.
+     * Example: ["summer", "casual", "slim-fit", "cotton"]
+     */
+    tags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
   },
   { timestamps: true }
 );

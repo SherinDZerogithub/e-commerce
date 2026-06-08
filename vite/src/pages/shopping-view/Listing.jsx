@@ -167,17 +167,6 @@ export default function ShopListing() {
     }
   }, [productDetails]);
 
-  // Alert when cart items are fetched
-  useEffect(() => {
-    if (cartItems && cartItems.length > 0) {
-      alert(
-        `Cart Items:\n${cartItems
-          .map((item) => `${item.productId.name} x ${item.quantity}`)
-          .join("\n")}`
-      );
-    }
-  }, [cartItems]);
-
   return (
 
     //this si the products paaaaaaaaaaaaaaaaaaaaaaaaaaaaageeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee

@@ -8,7 +8,7 @@ import store from './store/store'
 import { Toaster } from './components/ui/toaster'
 
 createRoot(document.getElementById('root')).render(
-  <BrowserRouter>
+  <BrowserRouter basename={import.meta.env.BASE_URL}>
   <Provider store={store} >
   <App/>
   <Toaster />

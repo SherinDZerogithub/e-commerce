@@ -101,6 +101,13 @@ export const addProductFormElements = [
     type: "number",
     placeholder: "Enter total stock",
   },
+  {
+    label: "Tags",
+    name: "tags",
+    componentType: "input",
+    type: "text",
+    placeholder: "e.g. summer, casual, slim-fit, cotton (comma-separated)",
+  },
 ];
 
 export const shoppingViewHeaderMenuItems = [

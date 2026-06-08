@@ -14,6 +14,12 @@ import StarRatingcomponent from "../common/StarRating";
 import StarRatingComponent from "../common/StarRating";
 import { useEffect, useState } from "react";
 import { addNewReviews, getReviews } from "@/store/shop/review-slice";
+import {
+  trackProductView,
+  fetchSimilarProducts,
+  clearSimilarProducts,
+} from "@/store/shop/recommendations-slice";
+import RecommendationSection from "@/components/shopping-view/RecommendationSection";
 
 export default function ProductDetailsDialog({
   open,
@@ -28,6 +34,9 @@ export default function ProductDetailsDialog({
   const [rating, setRating] = useState(0);
   const { cartItems } = useSelector((state) => state.shopCart);
   const { reviews } = useSelector((state) => state.shopReview);
+  const { similarProducts, similarLoading } = useSelector(
+    (state) => state.recommendations
+  );
 
   function handleRatingChange(getRating) {
     console.log(getRating, "getRating");
@@ -77,6 +86,16 @@ export default function ProductDetailsDialog({
       dispatch(getReviews(productDetails?._id)).then((res) => {
         console.log("Fetched reviews after submission:", res);
       });
+
+      // Track view for recommendation engine
+      if (user?.id) {
+        dispatch(
+          trackProductView({ userId: user.id, productId: productDetails._id })
+        );
+      }
+
+      // Fetch similar products for "You might also like" strip
+      dispatch(fetchSimilarProducts({ productId: productDetails._id, limit: 6 }));
     }
   }, [productDetails]);
 
@@ -123,13 +142,15 @@ export default function ProductDetailsDialog({
   function handleDialogClose() {
     setOpen(false);
     dispatch(setProductDetails());
+    dispatch(clearSimilarProducts());
     setRating(0);
     setReviewMsg("");
   }
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 sm:p-8 max-w-[95vw] sm:max-w-[90vw] lg:max-w-[70vw] xl:max-w-[60vw] rounded-lg">
+      <DialogContent className="grid grid-cols-1 gap-8 p-6 sm:p-8 max-w-[95vw] sm:max-w-[90vw] lg:max-w-[70vw] xl:max-w-[60vw] rounded-lg overflow-y-auto max-h-[90vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Product Image */}
         <div className="relative overflow-hidden rounded-xl bg-gray-50 aspect-square flex items-center justify-center">
           <img
@@ -193,6 +214,20 @@ export default function ProductDetailsDialog({
                 <span className="text-sm font-medium text-gray-700">4.5</span>
               </div>
             </div>
+
+            {/* Tags */}
+            {productDetails?.tags && productDetails.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {productDetails.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-block bg-orange-100 text-orange-700 text-xs font-medium px-2.5 py-1 rounded-full"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Reviews Section */}
@@ -216,7 +251,7 @@ export default function ProductDetailsDialog({
                   </h3>
                 </div>
                 <div className="space-y-4 mt-10 flex-col gap-3">
-                  <Label> Write Your Review</Label>
+                  <Label htmlFor="review-message">Write Your Review</Label>
                   <div className="flex ">
                     <StarRatingComponent
                       rating={rating}
@@ -224,6 +259,7 @@ export default function ProductDetailsDialog({
                     />
                   </div>
                   <Input
+                    id="review-message"
                     name="reviewMsg"
                     value={reviewMsg}
                     onChange={(event) => setReviewMsg(event.target.value)}
@@ -266,6 +302,18 @@ export default function ProductDetailsDialog({
             )}
           </div>
         </div>
+        </div>{/* end grid cols-2 */}
+
+        {/* Similar Products strip – shown below the main product info */}
+        {(similarLoading || similarProducts.length > 0) && (
+          <div className="border-t pt-6">
+            <RecommendationSection
+              title="Similar Products"
+              products={similarProducts}
+              isLoading={similarLoading}
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

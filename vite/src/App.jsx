@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import AuthLayout from "./components/auth/layout";
 import AuthLogin from "./pages/auth/login";
 import AuthRegister from "./pages/auth/register";
@@ -48,6 +48,19 @@ function App() {
       <div className="flex flex-col overflow-hidden bg-white">
         {/* common components */}
         <Routes>
+          <Route
+            path="/"
+            element={
+              <Navigate
+                to={
+                  isAuthenticated && user?.role === "admin"
+                    ? "/admin/dashboard"
+                    : "/shop/home"
+                }
+                replace
+              />
+            }
+          />
           <Route
             path="/auth"
             element={

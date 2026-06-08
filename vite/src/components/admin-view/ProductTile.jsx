@@ -56,6 +56,18 @@ export default function AdminProducTiles({
               {product?.totalStock}
             </span>
           </div>
+          {product?.tags && product.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {product.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-block bg-orange-100 text-orange-700 text-xs font-medium px-2 py-0.5 rounded-full"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
         </CardContent>
 
         <CardFooter className="flex justify-between items-center">

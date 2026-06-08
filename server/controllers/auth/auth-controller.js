@@ -2,16 +2,31 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/User");
 
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("Missing JWT_SECRET. Add it to server/.env before using auth.");
+  }
+
+  return process.env.JWT_SECRET;
+};
+
 //register
 const registerUser = async (req, res) => {
   const { userName, email, password } = req.body;
 
   try {
-    const checkUser = await User.findOne({ email });
-    if (checkUser)
-      return res.json({
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail)
+      return res.status(400).json({
         success: false,
-        message: "User Already exists with the same email! Please try again",
+        message: "A user with this email already exists. Please use a different email.",
+      });
+
+    const existingUserName = await User.findOne({ userName });
+    if (existingUserName)
+      return res.status(400).json({
+        success: false,
+        message: "A user with this username already exists. Please choose a different username.",
       });
 
     const hashPassword = await bcrypt.hash(password, 12);
@@ -28,9 +43,17 @@ const registerUser = async (req, res) => {
     });
   } catch (e) {
     console.log(e);
+    if (e.code === 11000) {
+      const duplicateField = Object.keys(e.keyValue)[0] || "field";
+      return res.status(400).json({
+        success: false,
+        message: `${duplicateField} already exists. Please choose a different ${duplicateField}.`,
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: "Some error occured",
+      message: "Some error occurred",
     });
   }
 };
@@ -79,8 +102,8 @@ const loginUser = async (req, res) => {
         email: checkUser.email,
         userName: checkUser.userName,
       },
-      "CLIENT_SECRET_KEY",
-      { expiresIn: "60m" }
+      getJwtSecret(),
+      { expiresIn: "7d" }
     );
 
     res.cookie("token", token, { httpOnly: true, secure: false }).json({
@@ -92,6 +115,7 @@ const loginUser = async (req, res) => {
         id: checkUser._id,
         userName: checkUser.userName,
       },
+      token,
     });
   } catch (e) {
     console.log(e);
@@ -113,7 +137,13 @@ const logoutUser = (req, res) => {
 
 //auth middleware
 const authMiddleware = async (req, res, next) => {
-  const token = req.cookies.token;
+  let token = req.cookies && req.cookies.token;
+  // Fallback to Authorization header (Bearer <token>) for CORS/dev setups
+  if (!token && req.headers && req.headers.authorization) {
+    const parts = req.headers.authorization.split(" ");
+    if (parts.length === 2 && parts[0] === "Bearer") token = parts[1];
+  }
+
   if (!token)
     return res.status(401).json({
       success: false,
@@ -121,7 +151,7 @@ const authMiddleware = async (req, res, next) => {
     });
 
   try {
-    const decoded = jwt.verify(token, "CLIENT_SECRET_KEY");
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = decoded;
     next();
   } catch (error) {

@@ -22,6 +22,7 @@ out/
 .env
 .env.*
 *.local
+!.env.example
 
 # --------------------
 # OS/system/editor
@@ -51,9 +52,3 @@ LICENSE.md
 nmignore.md
 release.yml
 
-# remove cloudinary file
-
-
-
-cloudinary.js
-paypal.js

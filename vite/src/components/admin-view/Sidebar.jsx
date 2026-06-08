@@ -3,6 +3,8 @@ import {
   ShoppingBasket,
   BadgeCheck,
   ChartNoAxesCombined,
+  BarChart2,
+  Layers,
 } from "lucide-react";
 import React, { Fragment } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,9 +16,9 @@ import { fetchProduct } from "@/store/admin/Products-slice";
 const adminSideBarMenuItems = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    label: "Analytics",
     path: "/admin/dashboard",
-    icon: <LayoutDashboard size={20} />,
+    icon: <BarChart2 size={20} />,
   },
   {
     id: "products",
@@ -29,6 +31,12 @@ const adminSideBarMenuItems = [
     label: "Orders",
     path: "/admin/orders",
     icon: <BadgeCheck size={20} />,
+  },
+  {
+    id: "features",
+    label: "Features",
+    path: "/admin/features",
+    icon: <Layers size={20} />,
   },
 ];
 

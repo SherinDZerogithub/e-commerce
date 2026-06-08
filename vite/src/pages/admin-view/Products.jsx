@@ -30,6 +30,7 @@ const initialFormData = {
   price: "",
   salePrice: "",
   totalStock: "",
+  tags: "",
 };
 
 export default function AdminProducts() {
@@ -135,9 +136,18 @@ export default function AdminProducts() {
         {productList && productList.length > 0
           ? productList.map((productItem) => (
               <AdminProducTiles
+                key={productItem._id}
                 setCurrentEditedId={setCurrentEditedId}
                 setOpenCreateProductDialog={setOpenCreateProductDialog}
-                setFormData={setFormData}
+                setFormData={(product) =>
+                  setFormData({
+                    ...product,
+                    // Convert tags array → comma-separated string for the text input
+                    tags: Array.isArray(product.tags)
+                      ? product.tags.join(", ")
+                      : product.tags || "",
+                  })
+                }
                 product={productItem}
                 handleDelete={handleDelete}
               />

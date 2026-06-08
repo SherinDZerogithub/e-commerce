@@ -19,6 +19,10 @@ import addressSlice from "./shop/address-slice";
 import shoppingOrderSlice from "./shop/order-slice";
 import shoppingSearchSlice from "./shop/search-slice";
 import shoppingReviewSlice from "./shop/review-slice";
+import recommendationsSlice from "./shop/recommendations-slice";
+import adminAnalyticsSlice from "./admin/analytics-slice";
+import adminFeaturesSlice from "./admin/features-slice";
+import shopFeaturesSlice from "./shop/features-slice";
 
 const store = configureStore({
   reducer: {
@@ -31,6 +35,10 @@ const store = configureStore({
     adminOrder: adminOrderSlice,
     shopSearch: shoppingSearchSlice,
     shopReview: shoppingReviewSlice,
+    recommendations: recommendationsSlice,
+    adminAnalytics: adminAnalyticsSlice,
+    adminFeatures: adminFeaturesSlice,
+    shopFeatures: shopFeaturesSlice,
   },
 });
 
